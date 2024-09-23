@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página de Produtos</title>
+    <link rel="stylesheet" href="/styles/style.css"> <!-- Link para seu arquivo de CSS -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            background-color: #333;
+            color: white;
+            padding: 10px 0;
+            text-align: center;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .welcome-section {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .welcome-section h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        .welcome-section p {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+        .role-section {
+            margin-top: 20px;
+        }
+        .admin-section, .user-section {
+            background-color: #e7f3ff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .admin-section h2, .user-section h2 {
+            font-size: 22px;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        .admin-section {
+            background-color: #fbe5d6;
+        }
+        form {
+            margin-top: 30px;
+            text-align: center;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #c0392b;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Estalise - Loja de Acessórios</h1>
+    </header>
+
+    <div class="container">
+        <div class="welcome-section">
+            <h1>Bem-vindo, {{user.email}}!</h1>
+            <p>Seu papel é: <strong>{{user.role}}</strong></p>
+        </div>
+
+        <div class="role-section">
+            {{#if (eq user.role 'admin')}}
+            <div class="admin-section">
+                <h2>Você está logado como Administrador!</h2>
+                <p>Aqui você pode gerenciar produtos, visualizar relatórios e controlar o sistema.</p>
+                <!-- Conteúdo exclusivo para admin -->
+            </div>
+            {{else}}
+            <div class="user-section">
+                <h2>Você está logado como Usuário!</h2>
+                <p>Aproveite para explorar os produtos e realizar suas compras com facilidade.</p>
+                <!-- Conteúdo exclusivo para usuários comuns -->
+            </div>
+            {{/if}}
+        </div>
+
+        <form action="/logout" method="POST">
+            <button type="submit">Logout</button>
+        </form>
+    </div>
+
+</body>
+</html>

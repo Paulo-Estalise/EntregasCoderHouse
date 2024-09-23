@@ -1,10 +1,12 @@
 const express = require('express');
 const handlebars = require('express-handlebars');
+const session = require('express-session');
+const hbs = require('hbs');
 const mongooseConnection = require('./dao/mongooseConnection');
 const { Server } = require('socket.io');
 const path = require('path');
-const ProductManager = require('./dao/mongo/productManagerMongo'); // Altere o caminho de acordo com a estrutura da sua pasta.
-const MessageManager = require('./dao/mongo/messageManagerMongo'); // Altere o caminho de acordo com a estrutura da sua pasta.
+const ProductManager = require('./dao/mongo/productManagerMongo');
+const MessageManager = require('./dao/mongo/messageManagerMongo');
 
 const app = express();
 const PORT = 8080;
@@ -13,12 +15,33 @@ app.engine('handlebars', handlebars.engine());
 app.set('view engine', 'handlebars');
 app.set('views', path.join(__dirname, 'views'));
 
+app.use(session({
+    secret: 'seuSegredoAqui',
+    resave: false,
+    saveUninitialized: false
+}));
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Endpoint para listar todos os produtos
-app.get('/products', async (req, res) => {
+hbs.registerHelper('eq', (a, b) => a === b);
+
+function isAuthenticated(req, res, next) {
+    if (req.session.user) {
+        return next();
+    }
+    res.redirect('/login');
+}
+
+function isAdmin(req, res, next) {
+    if (req.session.user && req.session.user.role === 'admin') {
+        return next();
+    }
+    res.status(403).send('Acesso negado. Apenas para administradores.');
+}
+
+app.get('/products', isAuthenticated, async (req, res) => {
     try {
         const { limit } = req.query;
         const products = await ProductManager.getProducts();
@@ -27,14 +50,13 @@ app.get('/products', async (req, res) => {
             return res.json(products.slice(0, Number(limit)));
         }
 
-        res.json(products);
+        res.render('products', { products, user: req.session.user });
     } catch (error) {
         res.status(500).json({ error: 'Erro ao obter produtos.' });
     }
 });
 
-// Endpoint para listar produto por ID
-app.get('/products/:pid', async (req, res) => {
+app.get('/products/:pid', isAuthenticated, async (req, res) => {
     try {
         const { pid } = req.params;
         const product = await ProductManager.getProductById(pid);
@@ -49,17 +71,43 @@ app.get('/products/:pid', async (req, res) => {
     }
 });
 
-// View para exibir todos os produtos com handlebars
-app.get('/realtimeproducts', async (req, res) => {
+app.get('/realtimeproducts', isAuthenticated, async (req, res) => {
     try {
         const products = await ProductManager.getProducts();
-        res.render('realTimeProducts', { products });
+        res.render('realTimeProducts', { products, user: req.session.user });
     } catch (error) {
         res.status(500).json({ error: 'Erro ao carregar produtos em tempo real.' });
     }
 });
 
-// Configuração do servidor HTTP e WebSocket
+app.post('/login', async (req, res) => {
+    const { email, password } = req.body;
+    
+    const adminEmail = 'adminCoder@coder.com';
+    const adminPassword = 'adminCod3r123';
+
+    if (email === adminEmail && password === adminPassword) {
+        req.session.user = { email, role: 'admin' };
+        return res.redirect('/products');
+    } 
+
+    req.session.user = { email, role: 'user' }; 
+    res.redirect('/products');
+});
+
+app.post('/register', async (req, res) => {
+    res.redirect('/login');
+});
+
+app.post('/logout', (req, res) => {
+    req.session.destroy(err => {
+        if (err) {
+            return res.status(500).send('Erro ao encerrar a sessão');
+        }
+        res.redirect('/login');
+    });
+});
+
 const server = app.listen(PORT, () => {
     console.log(`Servidor rodando na porta ${PORT}`);
 });
@@ -89,4 +137,3 @@ io.on('connection', (socket) => {
         }
     });
 });
-
