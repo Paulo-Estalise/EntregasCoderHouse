@@ -2,7 +2,7 @@ const express = require('express');
 const handlebars = require('express-handlebars');
 const session = require('express-session');
 const hbs = require('hbs');
-const mongooseConnection = require('./dao/mongooseConnection');
+const mongooseConnection = require('./dao/mongo/mongooseConnection'); // Atualizado para o caminho correto
 const { Server } = require('socket.io');
 const path = require('path');
 const ProductManager = require('./dao/mongo/productManagerMongo');
@@ -10,6 +10,9 @@ const MessageManager = require('./dao/mongo/messageManagerMongo');
 
 const app = express();
 const PORT = 8080;
+
+// Conectar ao MongoDB
+mongooseConnection(); // Chama a função para conectar ao banco de dados
 
 app.engine('handlebars', handlebars.engine());
 app.set('view engine', 'handlebars');
@@ -43,13 +46,7 @@ function isAdmin(req, res, next) {
 
 app.get('/products', isAuthenticated, async (req, res) => {
     try {
-        const { limit } = req.query;
         const products = await ProductManager.getProducts();
-
-        if (limit) {
-            return res.json(products.slice(0, Number(limit)));
-        }
-
         res.render('products', { products, user: req.session.user });
     } catch (error) {
         res.status(500).json({ error: 'Erro ao obter produtos.' });
@@ -96,6 +93,7 @@ app.post('/login', async (req, res) => {
 });
 
 app.post('/register', async (req, res) => {
+    // Implementar lógica de registro se necessário
     res.redirect('/login');
 });
 

@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require('\.dao\.mongo\.messageManagerMongo.js');
 
 const messageSchema = new mongoose.Schema({
     user: String,
