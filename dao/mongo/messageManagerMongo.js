@@ -1,4 +1,4 @@
-const Message = require('../models/message.model');
+const Message = require('../../models/message.model');
 
 class MessageManagerMongo {
     async addMessage(messageData) {

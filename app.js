@@ -9,7 +9,7 @@ const ProductManager = require('./dao/mongo/productManagerMongo');
 const MessageManager = require('./dao/mongo/messageManagerMongo');
 
 const app = express();
-const PORT = 8080;
+const PORT = 8081;
 
 // Conectar ao MongoDB
 mongooseConnection(); // Chama a função para conectar ao banco de dados
