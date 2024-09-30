@@ -2,7 +2,11 @@ const express = require('express');
 const handlebars = require('express-handlebars');
 const session = require('express-session');
 const hbs = require('hbs');
-const mongooseConnection = require('./dao/mongo/mongooseConnection'); // Atualizado para o caminho correto
+const bcrypt = require('bcrypt');
+const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy;
+const GitHubStrategy = require('passport-github2').Strategy;
+const mongooseConnection = require('./dao/mongo/mongooseConnection');
 const { Server } = require('socket.io');
 const path = require('path');
 const ProductManager = require('./dao/mongo/productManagerMongo');
@@ -11,8 +15,7 @@ const MessageManager = require('./dao/mongo/messageManagerMongo');
 const app = express();
 const PORT = 8081;
 
-// Conectar ao MongoDB
-mongooseConnection(); // Chama a função para conectar ao banco de dados
+mongooseConnection();
 
 app.engine('handlebars', handlebars.engine());
 app.set('view engine', 'handlebars');
@@ -30,78 +33,80 @@ app.use(express.urlencoded({ extended: true }));
 
 hbs.registerHelper('eq', (a, b) => a === b);
 
-function isAuthenticated(req, res, next) {
-    if (req.session.user) {
-        return next();
-    }
-    res.redirect('/login');
-}
+// Configuração do Passport
+app.use(passport.initialize());
+app.use(passport.session());
 
-function isAdmin(req, res, next) {
-    if (req.session.user && req.session.user.role === 'admin') {
-        return next();
-    }
-    res.status(403).send('Acesso negado. Apenas para administradores.');
-}
-
-app.get('/products', isAuthenticated, async (req, res) => {
-    try {
-        const products = await ProductManager.getProducts();
-        res.render('products', { products, user: req.session.user });
-    } catch (error) {
-        res.status(500).json({ error: 'Erro ao obter produtos.' });
-    }
+passport.serializeUser((user, done) => {
+    done(null, user);
 });
 
-app.get('/products/:pid', isAuthenticated, async (req, res) => {
-    try {
-        const { pid } = req.params;
-        const product = await ProductManager.getProductById(pid);
-
-        if (!product) {
-            return res.status(404).json({ error: 'Produto não encontrado.' });
-        }
-
-        res.json(product);
-    } catch (error) {
-        res.status(500).json({ error: 'Erro ao obter o produto.' });
-    }
+passport.deserializeUser((user, done) => {
+    done(null, user);
 });
 
-app.get('/realtimeproducts', isAuthenticated, async (req, res) => {
-    try {
-        const products = await ProductManager.getProducts();
-        res.render('realTimeProducts', { products, user: req.session.user });
-    } catch (error) {
-        res.status(500).json({ error: 'Erro ao carregar produtos em tempo real.' });
+// Estratégia Local (Login/Registro)
+passport.use(new LocalStrategy({ usernameField: 'email' }, async (email, password, done) => {
+    // Aqui você deve buscar o usuário no banco de dados
+    const user = await findUserByEmail(email); // Suponha que essa função exista
+    if (!user) {
+        return done(null, false, { message: 'Usuário não encontrado' });
     }
-});
-
-app.post('/login', async (req, res) => {
-    const { email, password } = req.body;
     
-    const adminEmail = 'adminCoder@coder.com';
-    const adminPassword = 'adminCod3r123';
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+        return done(null, false, { message: 'Senha incorreta' });
+    }
 
-    if (email === adminEmail && password === adminPassword) {
-        req.session.user = { email, role: 'admin' };
-        return res.redirect('/products');
-    } 
+    return done(null, user);
+}));
 
-    req.session.user = { email, role: 'user' }; 
-    res.redirect('/products');
-});
+// Estratégia de Autenticação com GitHub
+passport.use(new GitHubStrategy({
+    clientID: 'SEU_CLIENT_ID',
+    clientSecret: 'SEU_CLIENT_SECRET',
+    callbackURL: 'http://localhost:8081/auth/github/callback'
+}, (accessToken, refreshToken, profile, done) => {
+    // Buscar ou criar o usuário no banco de dados baseado no perfil do GitHub
+    const user = findOrCreateUserByGitHub(profile); // Implementar esta função
+    return done(null, user);
+}));
 
+// Rota de Login
+app.post('/login', passport.authenticate('local', {
+    successRedirect: '/products',
+    failureRedirect: '/login',
+    failureFlash: true
+}));
+
+// Rota de Registro
 app.post('/register', async (req, res) => {
-    // Implementar lógica de registro se necessário
+    const { email, password } = req.body;
+
+    // Gerar hash da senha
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Salvar o novo usuário no banco de dados (exemplo)
+    await createUser({ email, password: hashedPassword });
+
     res.redirect('/login');
 });
 
+// Rota de Autenticação com GitHub
+app.get('/auth/github', passport.authenticate('github', { scope: ['user:email'] }));
+
+app.get('/auth/github/callback', 
+    passport.authenticate('github', { failureRedirect: '/login' }),
+    (req, res) => {
+        // Autenticação bem-sucedida, redireciona para /products
+        res.redirect('/products');
+    }
+);
+
+// Rota de Logout
 app.post('/logout', (req, res) => {
-    req.session.destroy(err => {
-        if (err) {
-            return res.status(500).send('Erro ao encerrar a sessão');
-        }
+    req.logout(() => {
         res.redirect('/login');
     });
 });
