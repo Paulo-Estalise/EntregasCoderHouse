@@ -1,16 +1,14 @@
 const mongoose = require('mongoose');
 
-const connectDB = async () => {
+const mongooseConnection = async () => {
     try {
-        await mongoose.connect('mongodb://localhost:27017/ecommerce', {
-            useNewUrlParser: true,
-            useUnifiedTopology: true
-        });
+        // Substitua 'sua_string_de_conexão_aqui' pela sua string de conexão real
+        await mongoose.connect('sua_string_de_conexão_aqui');
         console.log('MongoDB conectado com sucesso!');
     } catch (error) {
         console.error('Erro ao conectar ao MongoDB:', error);
-        process.exit(1);
     }
 };
 
-module.exports = connectDB;
+module.exports = mongooseConnection;
+

@@ -15,12 +15,15 @@ const MessageManager = require('./dao/mongo/messageManagerMongo');
 const app = express();
 const PORT = 8081;
 
+// Conexão com o MongoDB
 mongooseConnection();
 
+// Configuração do Handlebars
 app.engine('handlebars', handlebars.engine());
 app.set('view engine', 'handlebars');
 app.set('views', path.join(__dirname, 'views'));
 
+// Configuração de sessão
 app.use(session({
     secret: 'seuSegredoAqui',
     resave: false,
@@ -47,7 +50,6 @@ passport.deserializeUser((user, done) => {
 
 // Estratégia Local (Login/Registro)
 passport.use(new LocalStrategy({ usernameField: 'email' }, async (email, password, done) => {
-    // Aqui você deve buscar o usuário no banco de dados
     const user = await findUserByEmail(email); // Suponha que essa função exista
     if (!user) {
         return done(null, false, { message: 'Usuário não encontrado' });
@@ -66,11 +68,15 @@ passport.use(new GitHubStrategy({
     clientID: 'SEU_CLIENT_ID',
     clientSecret: 'SEU_CLIENT_SECRET',
     callbackURL: 'http://localhost:8081/auth/github/callback'
-}, (accessToken, refreshToken, profile, done) => {
-    // Buscar ou criar o usuário no banco de dados baseado no perfil do GitHub
-    const user = findOrCreateUserByGitHub(profile); // Implementar esta função
+}, async (accessToken, refreshToken, profile, done) => {
+    const user = await findOrCreateUserByGitHub(profile); // Implementar esta função
     return done(null, user);
 }));
+
+// Rota padrão (Página inicial)
+app.get('/', (req, res) => {
+    res.render('home', { title: 'Página Inicial' }); // Renderiza uma página inicial
+});
 
 // Rota de Login
 app.post('/login', passport.authenticate('local', {
@@ -99,7 +105,6 @@ app.get('/auth/github', passport.authenticate('github', { scope: ['user:email'] 
 app.get('/auth/github/callback', 
     passport.authenticate('github', { failureRedirect: '/login' }),
     (req, res) => {
-        // Autenticação bem-sucedida, redireciona para /products
         res.redirect('/products');
     }
 );
