@@ -1,7 +1,6 @@
 const express = require('express');
-const handlebars = require('express-handlebars');
+const { engine } = require('express-handlebars'); // Importando o método 'engine' diretamente
 const session = require('express-session');
-const hbs = require('hbs');
 const bcrypt = require('bcrypt');
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
@@ -13,13 +12,17 @@ const ProductManager = require('./dao/mongo/productManagerMongo');
 const MessageManager = require('./dao/mongo/messageManagerMongo');
 
 const app = express();
-const PORT = 8081;
+const PORT = 8080;
 
 // Conexão com o MongoDB
 mongooseConnection();
 
 // Configuração do Handlebars
-app.engine('handlebars', handlebars.engine());
+app.engine('handlebars', engine({ // Corrigido aqui
+    defaultLayout: 'main',
+    layoutsDir: path.join(__dirname, 'views/layouts'),
+    extname: '.handlebars',
+}));
 app.set('view engine', 'handlebars');
 app.set('views', path.join(__dirname, 'views'));
 
@@ -33,8 +36,6 @@ app.use(session({
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-hbs.registerHelper('eq', (a, b) => a === b);
 
 // Configuração do Passport
 app.use(passport.initialize());
@@ -67,7 +68,7 @@ passport.use(new LocalStrategy({ usernameField: 'email' }, async (email, passwor
 passport.use(new GitHubStrategy({
     clientID: 'SEU_CLIENT_ID',
     clientSecret: 'SEU_CLIENT_SECRET',
-    callbackURL: 'http://localhost:8081/auth/github/callback'
+    callbackURL: 'http://localhost:8080/auth/github/callback'
 }, async (accessToken, refreshToken, profile, done) => {
     const user = await findOrCreateUserByGitHub(profile); // Implementar esta função
     return done(null, user);
@@ -75,7 +76,7 @@ passport.use(new GitHubStrategy({
 
 // Rota padrão (Página inicial)
 app.get('/', (req, res) => {
-    res.render('home', { title: 'Página Inicial' }); // Renderiza uma página inicial
+    res.render('home', { title: 'Página Inicial' });
 });
 
 // Rota de Login
@@ -93,8 +94,8 @@ app.post('/register', async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Salvar o novo usuário no banco de dados (exemplo)
-    await createUser({ email, password: hashedPassword });
+    // Salvar o novo usuário no banco de dados
+    await createUser({ email, password: hashedPassword }); // Implementar esta função
 
     res.redirect('/login');
 });
@@ -145,3 +146,16 @@ io.on('connection', (socket) => {
         }
     });
 });
+
+// Implementação de funções auxiliares
+async function findUserByEmail(email) {
+    // Implementar a lógica para encontrar um usuário pelo e-mail no banco de dados
+}
+
+async function createUser(user) {
+    // Implementar a lógica para criar um novo usuário no banco de dados
+}
+
+async function findOrCreateUserByGitHub(profile) {
+    // Implementar a lógica para encontrar ou criar um usuário com base no perfil do GitHub
+}
