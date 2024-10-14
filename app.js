@@ -78,7 +78,9 @@ passport.use(new GitHubStrategy({
 app.get('/', (req, res) => {
     res.render('home', { title: 'Página Inicial' });
 });
-
+app.get('/realtimeproducts', (req, res) => {
+    res.render('realtimeproducts');
+});
 // Rota de Login
 app.post('/login', passport.authenticate('local', {
     successRedirect: '/products',

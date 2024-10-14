@@ -1,38 +1,30 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Produtos em Tempo Real</title>
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="/js/script.js" defer></script>
 </head>
 <body>
     <h1>Produtos em Tempo Real</h1>
-    <ul id="productList">
+    <ul id="product-list">
         {{#each products}}
-            <li id="product-{{id}}">{{title}} - {{price}} <button onclick="deleteProduct({{id}})">Excluir</button></li>
+            <li>{{this.title}} - {{this.price}}</li>
         {{/each}}
     </ul>
+
+    <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
-        socket.on('updateProducts', (products) => {
-            const productList = document.getElementById('productList');
+        socket.on('products-updated', (products) => {
+            const productList = document.getElementById('product-list');
             productList.innerHTML = '';
             products.forEach(product => {
-                const listItem = document.createElement('li');
-                listItem.id = `product-${product.id}`;
-                listItem.innerHTML = `${product.title} - ${product.price} <button onclick="deleteProduct(${product.id})">Excluir</button>`;
-                productList.appendChild(listItem);
+                const li = document.createElement('li');
+                li.textContent = `${product.title} - ${product.price}`;
+                productList.appendChild(li);
             });
         });
-
-        function deleteProduct(id) {
-            fetch(`/products/${id}`, { method: 'DELETE' })
-                .then(() => {
-                    socket.emit('productDeleted');
-                });
-        }
     </script>
 </body>
 </html>
