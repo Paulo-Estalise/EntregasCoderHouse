@@ -1,4 +1,4 @@
-import ProductModel from './models/productModel.js';
+const ProductModel = require ('./models/productModel.js');
 
 class ProductDao {
     static async getAll() {
@@ -12,4 +12,4 @@ class ProductDao {
     // Métodos adicionais para criação, atualização e exclusão podem ser adicionados aqui
 }
 
-export default ProductDao;
+module.exports = ProductDao;
