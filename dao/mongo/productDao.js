@@ -1,4 +1,4 @@
-const ProductModel = require ('./models/productModel.js');
+const ProductModel = require('../../models/product.model');
 
 class ProductDao {
     static async getAll() {
