@@ -1,4 +1,5 @@
-// app.js
+require('dotenv').config(); // Carrega as variáveis do .env
+
 const express = require('express');
 const { engine } = require('express-handlebars');
 const session = require('express-session');
@@ -8,12 +9,14 @@ const LocalStrategy = require('passport-local').Strategy;
 const GitHubStrategy = require('passport-github2').Strategy;
 const { Server } = require('socket.io');
 const path = require('path');
-const { config } = require('./config/config');
+const config = require('./config/config'); // Ajuste na importação do config
 const mongooseConnection = require('./dao/mongo/mongooseConnection');
 const productRoutes = require('./routes/productRoutes');
 const userRoutes = require('./routes/userRoutes');
 const ProductManager = require('./dao/mongo/productManagerMongo');
 const MessageManager = require('./dao/mongo/messageManagerMongo');
+const generateMockProducts = require('./mocks/mockProducts'); // Import do módulo de mocking
+const errorHandler = require('./middlewares/errorHandler'); // Import do middleware de erro
 
 const app = express();
 
@@ -81,6 +84,16 @@ passport.use(new GitHubStrategy({
 app.use('/products', productRoutes);
 app.use('/users', userRoutes);
 
+// Endpoint de Mocking para produtos
+app.get('/mockingproducts', (req, res, next) => {
+    try {
+        const mockProducts = generateMockProducts(); // Gera 100 produtos fictícios
+        res.status(200).json(mockProducts);
+    } catch (error) {
+        next(error); // Encaminha o erro para o middleware de erro
+    }
+});
+
 // Rota de Logout
 app.post('/logout', (req, res) => {
     req.logout(() => {
@@ -118,6 +131,9 @@ io.on('connection', (socket) => {
         }
     });
 });
+
+// Middleware de erro
+app.use(errorHandler); // Middleware de erro após todas as rotas
 
 // Funções auxiliares (implementação de exemplo)
 async function findUserByEmail(email) {

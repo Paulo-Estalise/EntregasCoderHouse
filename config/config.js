@@ -1,14 +1,9 @@
-const dotenv = require('dotenv');
+require('dotenv').config();
 
-dotenv.config();
-
-const config = {
-    port: process.env.PORT || 8080,
-    mongoUri: process.env.MONGODB_URI,
-    sessionSecret: process.env.SESSION_SECRET,
+module.exports = {
     githubClientId: process.env.GITHUB_CLIENT_ID,
-    githubClientSecret: process.env.GITHUB_CLIENT_SECRET
+    githubClientSecret: process.env.GITHUB_CLIENT_SECRET,
+    mongoUri: process.env.MONGO_URI,
+    sessionSecret: process.env.SESSION_SECRET,
+    port: process.env.PORT || 8080
 };
-
-module.exports = { config };
-

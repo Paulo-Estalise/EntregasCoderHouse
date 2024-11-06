@@ -1,8 +1,10 @@
 const express = require('express');
-const { getProducts, getProductById } = require('../controllers/productController');
 const router = express.Router();
+const generateMockProducts = require('../mocks/mockProducts');
 
-router.get('/', getProducts);
-router.get('/:id', getProductById);
+router.get('/mockingproducts', (req, res) => {
+  const mockProducts = generateMockProducts();
+  res.status(200).json(mockProducts);
+});
 
 module.exports = router;
