@@ -17,6 +17,7 @@ const ProductManager = require('./dao/mongo/productManagerMongo');
 const MessageManager = require('./dao/mongo/messageManagerMongo');
 const generateMockProducts = require('./mocks/mockProducts'); // Import do módulo de mocking
 const errorHandler = require('./middlewares/errorHandler'); // Import do middleware de erro
+const logger = require('./logger'); // Importa o logger
 
 const app = express();
 
@@ -59,11 +60,13 @@ passport.deserializeUser((user, done) => {
 passport.use(new LocalStrategy({ usernameField: 'email' }, async (email, password, done) => {
     const user = await findUserByEmail(email); // Função implementada
     if (!user) {
+        logger.warn('Usuário não encontrado no login local');
         return done(null, false, { message: 'Usuário não encontrado' });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
+        logger.warn('Senha incorreta no login local');
         return done(null, false, { message: 'Senha incorreta' });
     }
 
@@ -89,7 +92,9 @@ app.get('/mockingproducts', (req, res, next) => {
     try {
         const mockProducts = generateMockProducts(); // Gera 100 produtos fictícios
         res.status(200).json(mockProducts);
+        logger.info('Mocking de produtos gerado com sucesso');
     } catch (error) {
+        logger.error('Erro ao gerar mocking de produtos', error);
         next(error); // Encaminha o erro para o middleware de erro
     }
 });
@@ -98,26 +103,28 @@ app.get('/mockingproducts', (req, res, next) => {
 app.post('/logout', (req, res) => {
     req.logout(() => {
         res.redirect('/login');
+        logger.info('Usuário deslogado com sucesso');
     });
 });
 
 // Configuração do Socket.IO
 const server = app.listen(config.port, () => {
-    console.log(`Servidor rodando na porta ${config.port}`);
+    logger.info(`Servidor rodando na porta ${config.port}`);
 });
 
 const io = new Server(server);
 
 io.on('connection', (socket) => {
-    console.log('Novo cliente conectado!');
+    logger.info('Novo cliente conectado!');
 
     socket.on('new-product', async (data) => {
         try {
             await ProductManager.addProduct(data);
             const products = await ProductManager.getProducts();
             io.emit('products-updated', products);
+            logger.info('Novo produto adicionado e atualizado via websocket');
         } catch (error) {
-            console.error('Erro ao adicionar produto:', error);
+            logger.error('Erro ao adicionar produto:', error);
         }
     });
 
@@ -126,16 +133,29 @@ io.on('connection', (socket) => {
             await ProductManager.deleteProduct(id);
             const products = await ProductManager.getProducts();
             io.emit('products-updated', products);
+            logger.info('Produto deletado e atualizado via websocket');
         } catch (error) {
-            console.error('Erro ao deletar produto:', error);
+            logger.error('Erro ao deletar produto:', error);
         }
     });
+});
+
+// Endpoint para testar o logger
+app.get('/loggerTest', (req, res) => {
+    logger.debug('Teste de log debug');
+    logger.http('Teste de log http');
+    logger.info('Teste de log info');
+    logger.warn('Teste de log warning');
+    logger.error('Teste de log error');
+    logger.log({ level: 'fatal', message: 'Teste de log fatal' });
+
+    res.send('Teste de logger completo. Verifique o console e o arquivo errors.log para os resultados.');
 });
 
 // Middleware de erro
 app.use(errorHandler); // Middleware de erro após todas as rotas
 
-// Funções auxiliares (implementação de exemplo)
+// Funções auxiliares 
 async function findUserByEmail(email) {
     // Implementar a lógica para buscar usuário por email no banco de dados
 }

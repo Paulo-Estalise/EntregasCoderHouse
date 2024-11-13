@@ -1,0 +1,6 @@
+2024-11-13T20:03:13.763Z [INFO]: Servidor rodando na porta 8080
+2024-11-13T20:03:39.466Z [DEBUG]: Teste de log debug
+2024-11-13T20:03:39.467Z [HTTP]: Teste de log http
+2024-11-13T20:03:39.467Z [INFO]: Teste de log info
+2024-11-13T20:03:39.468Z [WARN]: Teste de log warning
+2024-11-13T20:03:39.468Z [ERROR]: Teste de log error
