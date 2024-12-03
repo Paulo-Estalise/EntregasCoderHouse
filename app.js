@@ -9,6 +9,8 @@ const LocalStrategy = require('passport-local').Strategy;
 const GitHubStrategy = require('passport-github2').Strategy;
 const { Server } = require('socket.io');
 const path = require('path');
+const swaggerJsdoc = require('swagger-jsdoc');
+const swaggerUi = require('swagger-ui-express');
 const config = require('./config/config'); // Ajuste na importação do config
 const mongooseConnection = require('./dao/mongo/mongooseConnection');
 const productRoutes = require('./routes/productRoutes');
@@ -82,6 +84,28 @@ passport.use(new GitHubStrategy({
     const user = await findOrCreateUserByGitHub(profile); // Implementar esta função
     return done(null, user);
 }));
+
+// Configuração do Swagger
+const swaggerOptions = {
+    definition: {
+        openapi: '3.0.0',
+        info: {
+            title: 'API de E-commerce',
+            description: 'Documentação da API do projeto final de e-commerce.',
+            version: '1.0.0',
+        },
+        servers: [
+            {
+                url: `http://localhost:${config.port}`,
+                description: 'Servidor local',
+            },
+        ],
+    },
+    apis: ['./routes/*.js'], // Local onde estão as rotas documentadas
+};
+
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Rotas
 app.use('/products', productRoutes);

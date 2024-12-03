@@ -1,0 +1,25 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+      "title": "API de E-commerce",
+      "description": "Documentação da API para o projeto final de e-commerce.",
+      "version": "1.0.0"
+    },
+    "servers": [
+      {
+        "url": "http://localhost:3000",
+        "description": "Servidor local"
+      }
+    ],
+    "tags": [
+      {
+        "name": "Produtos",
+        "description": "Operações relacionadas a produtos"
+      },
+      {
+        "name": "Carrinhos",
+        "description": "Operações relacionadas a carrinhos de compras"
+      }
+    ]
+  }
+  

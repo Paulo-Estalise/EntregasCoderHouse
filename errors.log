@@ -4,3 +4,4 @@
 2024-11-13T20:03:39.467Z [INFO]: Teste de log info
 2024-11-13T20:03:39.468Z [WARN]: Teste de log warning
 2024-11-13T20:03:39.468Z [ERROR]: Teste de log error
+2024-12-03T22:16:05.175Z [INFO]: Servidor rodando na porta 8080
